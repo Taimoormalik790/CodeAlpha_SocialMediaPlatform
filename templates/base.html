@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Pulse{% endblock %} — Stay Connected</title>
+    {% load static %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+{% if user.is_authenticated %}
+<nav class="sidebar">
+    <div class="sidebar-logo">
+        <span class="logo-mark">&#9737;</span>
+        <span class="logo-text">Pulse</span>
+    </div>
+    <ul class="sidebar-nav">
+        <li>
+            <a href="{% url 'feed' %}" class="nav-link {% if request.resolver_match.url_name == 'feed' %}active{% endif %}">
+                <i class="bi bi-house-fill"></i><span>Home</span>
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'explore' %}" class="nav-link {% if request.resolver_match.url_name == 'explore' %}active{% endif %}">
+                <i class="bi bi-compass-fill"></i><span>Explore</span>
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'search_users' %}" class="nav-link {% if request.resolver_match.url_name == 'search_users' %}active{% endif %}">
+                <i class="bi bi-search"></i><span>Search</span>
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'profile' user.username %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+                <i class="bi bi-person-fill"></i><span>Profile</span>
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'edit_profile' %}" class="nav-link">
+                <i class="bi bi-gear-fill"></i><span>Settings</span>
+            </a>
+        </li>
+    </ul>
+    <div class="sidebar-user">
+        <a href="{% url 'profile' user.username %}" class="user-chip">
+            {% if user.profile.profile_picture %}
+                <img src="{{ user.profile.profile_picture.url }}" alt="{{ user.username }}" class="avatar-sm">
+            {% else %}
+                <div class="avatar-sm avatar-fallback">{{ user.username|first|upper }}</div>
+            {% endif %}
+            <div class="user-chip-info">
+                <span class="user-chip-name">{{ user.get_full_name|default:user.username }}</span>
+                <span class="user-chip-handle">@{{ user.username }}</span>
+            </div>
+        </a>
+        <a href="{% url 'logout' %}" class="logout-btn" title="Logout"><i class="bi bi-box-arrow-right"></i></a>
+    </div>
+</nav>
+{% endif %}
+
+<main class="{% if user.is_authenticated %}main-content{% else %}auth-main{% endif %}">
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        <div class="flash-message flash-{{ message.tags }}">
+            <i class="bi bi-{% if message.tags == 'success' %}check-circle-fill{% elif message.tags == 'error' or message.tags == 'danger' %}x-circle-fill{% else %}info-circle-fill{% endif %}"></i>
+            {{ message }}
+            <button class="flash-close" onclick="this.parentElement.remove()"><i class="bi bi-x"></i></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+</main>
+
+<script src="{% static 'js/main.js' %}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

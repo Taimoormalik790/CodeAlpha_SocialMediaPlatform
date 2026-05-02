@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ profile_user.username }}'s Profile{% endblock %}
+
+{% block content %}
+<div class="profile-layout">
+    <div class="profile-main">
+
+        <!-- Profile Header -->
+        <div class="card profile-header-card">
+            <div class="profile-cover"></div>
+            <div class="profile-header-content">
+                <div class="profile-avatar-wrap">
+                    {% if profile.profile_picture %}
+                        <img src="{{ profile.profile_picture.url }}" alt="{{ profile_user.username }}" class="avatar-xl">
+                    {% else %}
+                        <div class="avatar-xl avatar-fallback avatar-fallback-xl">{{ profile_user.username|first|upper }}</div>
+                    {% endif %}
+                </div>
+                <div class="profile-header-info">
+                    <div class="profile-name-row">
+                        <div>
+                            <h1 class="profile-name">{{ profile_user.get_full_name|default:profile_user.username }}</h1>
+                            <span class="profile-handle">@{{ profile_user.username }}</span>
+                        </div>
+                        <div class="profile-actions">
+                            {% if is_own_profile %}
+                                <a href="{% url 'edit_profile' %}" class="btn-outline"><i class="bi bi-pencil"></i> Edit Profile</a>
+                            {% else %}
+                                <button class="follow-btn {% if is_following %}following{% endif %}"
+                                        id="followBtn"
+                                        data-username="{{ profile_user.username }}"
+                                        onclick="toggleFollow(this)">
+                                    {% if is_following %}<i class="bi bi-person-check-fill"></i> Following{% else %}<i class="bi bi-person-plus"></i> Follow{% endif %}
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if profile.bio %}
+                    <p class="profile-bio">{{ profile.bio }}</p>
+                    {% endif %}
+
+                    <div class="profile-meta">
+                        {% if profile.location %}
+                        <span><i class="bi bi-geo-alt-fill"></i> {{ profile.location }}</span>
+                        {% endif %}
+                        {% if profile.website %}
+                        <span><i class="bi bi-link-45deg"></i> <a href="{{ profile.website }}" target="_blank" rel="noopener">{{ profile.website|truncatechars:30 }}</a></span>
+                        {% endif %}
+                        <span><i class="bi bi-calendar3"></i> Joined {{ profile.created_at|date:"M Y" }}</span>
+                    </div>
+
+                    <div class="profile-stats">
+                        <div class="profile-stat">
+                            <span class="stat-value">{{ posts_count }}</span>
+                            <span class="stat-label">Posts</span>
+                        </div>
+                        <a href="{% url 'followers_list' profile_user.username %}" class="profile-stat">
+                            <span class="stat-value">{{ followers_count }}</span>
+                            <span class="stat-label">Followers</span>
+                        </a>
+                        <a href="{% url 'following_list' profile_user.username %}" class="profile-stat">
+                            <span class="stat-value">{{ following_count }}</span>
+                            <span class="stat-label">Following</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Posts Grid -->
+        <div class="posts-section">
+            <h2 class="section-title">Posts</h2>
+            {% if posts %}
+                {% for post in posts %}
+                <div class="card post-card">
+                    <div class="post-header">
+                        <div class="post-author-link">
+                            {% if post.author.profile.profile_picture %}
+                                <img src="{{ post.author.profile.profile_picture.url }}" alt="" class="avatar-md">
+                            {% else %}
+                                <div class="avatar-md avatar-fallback">{{ post.author.username|first|upper }}</div>
+                            {% endif %}
+                            <div class="post-author-info">
+                                <span class="post-author-name">{{ post.author.get_full_name|default:post.author.username }}</span>
+                                <span class="post-author-handle">{{ post.created_at|timesince }} ago</span>
+                            </div>
+                        </div>
+                        {% if is_own_profile %}
+                        <div class="post-menu">
+                            <button class="post-menu-btn" onclick="toggleMenu(this)"><i class="bi bi-three-dots"></i></button>
+                            <div class="post-dropdown">
+                                <form method="POST" action="{% url 'delete_post' post.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item danger" onclick="return confirm('Delete this post?')">
+                                        <i class="bi bi-trash3"></i> Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="post-content">
+                        <p>{{ post.content }}</p>
+                        {% if post.image %}
+                        <div class="post-image-wrap">
+                            <img src="{{ post.image.url }}" alt="Post image" class="post-image">
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="post-stats">
+                        <span>{{ post.get_likes_count }} like{{ post.get_likes_count|pluralize }}</span>
+                        <span>{{ post.get_comments_count }} comment{{ post.get_comments_count|pluralize }}</span>
+                    </div>
+                    <div class="post-actions">
+                        <button class="action-btn like-btn {% if request.user in post.likes.all %}liked{% endif %}"
+                                onclick="toggleLike({{ post.id }}, this)">
+                            <i class="bi bi-heart{% if request.user in post.likes.all %}-fill{% endif %}"></i>
+                            <span class="like-count">{{ post.get_likes_count }}</span>
+                        </button>
+                        <a href="{% url 'post_detail' post.id %}" class="action-btn">
+                            <i class="bi bi-chat"></i>
+                            <span>{{ post.get_comments_count }}</span>
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-feed">
+                    <div class="empty-icon">&#128221;</div>
+                    <h3>No posts yet</h3>
+                    {% if is_own_profile %}
+                    <p>Share your first thought with the world!</p>
+                    <a href="{% url 'feed' %}" class="btn-accent">Create a Post</a>
+                    {% else %}
+                    <p>{{ profile_user.username }} hasn't posted anything yet.</p>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+function toggleFollow(btn) {
+    const username = btn.dataset.username;
+    fetch(`/users/${username}/follow/`, {
+        method: 'POST',
+        headers: {'X-CSRFToken': getCsrfToken(), 'Content-Type': 'application/json'},
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.is_following) {
+            btn.classList.add('following');
+            btn.innerHTML = '<i class="bi bi-person-check-fill"></i> Following';
+        } else {
+            btn.classList.remove('following');
+            btn.innerHTML = '<i class="bi bi-person-plus"></i> Follow';
+        }
+    });
+}
+</script>
+{% endblock %}
+{% endblock %}

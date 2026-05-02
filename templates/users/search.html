@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Search Users{% endblock %}
+
+{% block content %}
+<div class="settings-layout">
+    <div class="settings-main">
+        <div class="card settings-card">
+            <h1 class="settings-title"><i class="bi bi-search"></i> Find People</h1>
+            <form method="GET" class="search-form">
+                <div class="search-input-wrap">
+                    <i class="bi bi-search search-input-icon"></i>
+                    <input type="text" name="q" value="{{ query }}" placeholder="Search by username..." class="search-input" autofocus>
+                    <button type="submit" class="btn-accent">Search</button>
+                </div>
+            </form>
+
+            {% if query %}
+            <div class="search-results">
+                <p class="search-results-count">{{ users|length }} result{{ users|length|pluralize }} for "{{ query }}"</p>
+                {% for found_user in users %}
+                <div class="search-user-card">
+                    <a href="{% url 'profile' found_user.username %}" class="search-user-link">
+                        {% if found_user.profile.profile_picture %}
+                            <img src="{{ found_user.profile.profile_picture.url }}" alt="" class="avatar-md">
+                        {% else %}
+                            <div class="avatar-md avatar-fallback">{{ found_user.username|first|upper }}</div>
+                        {% endif %}
+                        <div class="search-user-info">
+                            <span class="search-user-name">{{ found_user.get_full_name|default:found_user.username }}</span>
+                            <span class="search-user-handle">@{{ found_user.username }}</span>
+                            {% if found_user.profile.bio %}
+                            <span class="search-user-bio">{{ found_user.profile.bio|truncatechars:80 }}</span>
+                            {% endif %}
+                        </div>
+                    </a>
+                    <button class="follow-btn-sm" data-username="{{ found_user.username }}" onclick="toggleFollowBtn(this)">
+                        Follow
+                    </button>
+                </div>
+                {% empty %}
+                <div class="empty-feed">
+                    <div class="empty-icon">&#128269;</div>
+                    <h3>No users found</h3>
+                    <p>Try a different search term.</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

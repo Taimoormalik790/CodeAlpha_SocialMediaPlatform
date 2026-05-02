@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Sign Up{% endblock %}
+
+{% block content %}
+<div class="auth-split">
+    <div class="auth-brand">
+        <div class="brand-content">
+            <div class="brand-logo">
+                <span class="logo-mark-lg">&#9737;</span>
+                <span class="logo-text-lg">Pulse</span>
+            </div>
+            <p class="brand-tagline">Your voice.<br>Your community.<br>Your pulse.</p>
+            <ul class="feature-list">
+                <li><i class="bi bi-check-circle-fill"></i> Share posts & photos</li>
+                <li><i class="bi bi-check-circle-fill"></i> Follow people you love</li>
+                <li><i class="bi bi-check-circle-fill"></i> Engage with your feed</li>
+                <li><i class="bi bi-check-circle-fill"></i> Build your community</li>
+            </ul>
+        </div>
+        <div class="brand-orb brand-orb-1"></div>
+        <div class="brand-orb brand-orb-2"></div>
+    </div>
+    <div class="auth-form-panel">
+        <div class="auth-form-wrap">
+            <h1 class="auth-title">Join Pulse</h1>
+            <p class="auth-subtitle">Create your account in seconds</p>
+            <form method="POST" class="auth-form">
+                {% csrf_token %}
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">First Name</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-person input-icon"></i>
+                            {{ form.first_name }}
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Last Name</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-person input-icon"></i>
+                            {{ form.last_name }}
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <div class="input-wrap">
+                        <i class="bi bi-at input-icon"></i>
+                        {{ form.username }}
+                    </div>
+                    {% if form.username.errors %}<div class="field-error">{{ form.username.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <div class="input-wrap">
+                        <i class="bi bi-envelope input-icon"></i>
+                        {{ form.email }}
+                    </div>
+                    {% if form.email.errors %}<div class="field-error">{{ form.email.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <div class="input-wrap">
+                        <i class="bi bi-lock input-icon"></i>
+                        {{ form.password1 }}
+                        <button type="button" class="toggle-pw" onclick="togglePassword('{{ form.password1.id_for_label }}', this)"><i class="bi bi-eye"></i></button>
+                    </div>
+                    {% if form.password1.errors %}<div class="field-error">{{ form.password1.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Confirm Password</label>
+                    <div class="input-wrap">
+                        <i class="bi bi-lock-fill input-icon"></i>
+                        {{ form.password2 }}
+                    </div>
+                    {% if form.password2.errors %}<div class="field-error">{{ form.password2.errors.0 }}</div>{% endif %}
+                </div>
+                {% if form.non_field_errors %}
+                <div class="form-error">{{ form.non_field_errors.0 }}</div>
+                {% endif %}
+                <button type="submit" class="btn-primary-full">Create Account <i class="bi bi-arrow-right"></i></button>
+            </form>
+            <div class="auth-divider"><span>Already have an account?</span></div>
+            <a href="{% url 'login' %}" class="btn-secondary-full">Sign in instead</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

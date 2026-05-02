@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ list_type }} — {{ profile_user.username }}{% endblock %}
+
+{% block content %}
+<div class="settings-layout">
+    <div class="settings-main">
+        <div class="card settings-card">
+            <div class="settings-header">
+                <h1 class="settings-title">{{ profile_user.username }}'s {{ list_type }}</h1>
+                <a href="{% url 'profile' profile_user.username %}" class="btn-ghost"><i class="bi bi-arrow-left"></i> Back</a>
+            </div>
+            {% for user in users_list %}
+            <div class="search-user-card">
+                <a href="{% url 'profile' user.username %}" class="search-user-link">
+                    {% if user.profile.profile_picture %}
+                        <img src="{{ user.profile.profile_picture.url }}" alt="" class="avatar-md">
+                    {% else %}
+                        <div class="avatar-md avatar-fallback">{{ user.username|first|upper }}</div>
+                    {% endif %}
+                    <div class="search-user-info">
+                        <span class="search-user-name">{{ user.get_full_name|default:user.username }}</span>
+                        <span class="search-user-handle">@{{ user.username }}</span>
+                    </div>
+                </a>
+                {% if user != request.user %}
+                <button class="follow-btn-sm" data-username="{{ user.username }}" onclick="toggleFollowBtn(this)">Follow</button>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="empty-feed">
+                <div class="empty-icon">&#128101;</div>
+                <h3>No {{ list_type|lower }} yet</h3>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

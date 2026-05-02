@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Post by {{ post.author.username }}{% endblock %}
+
+{% block content %}
+<div class="detail-layout">
+    <div class="detail-main">
+        <a href="javascript:history.back()" class="back-link"><i class="bi bi-arrow-left"></i> Back</a>
+
+        <div class="card post-card post-card-detail">
+            <div class="post-header">
+                <a href="{% url 'profile' post.author.username %}" class="post-author-link">
+                    {% if post.author.profile.profile_picture %}
+                        <img src="{{ post.author.profile.profile_picture.url }}" alt="{{ post.author.username }}" class="avatar-md">
+                    {% else %}
+                        <div class="avatar-md avatar-fallback">{{ post.author.username|first|upper }}</div>
+                    {% endif %}
+                    <div class="post-author-info">
+                        <span class="post-author-name">{{ post.author.get_full_name|default:post.author.username }}</span>
+                        <span class="post-author-handle">@{{ post.author.username }} &middot; {{ post.created_at|date:"M d, Y \a\t g:i A" }}</span>
+                    </div>
+                </a>
+                {% if post.author == request.user %}
+                <div class="post-menu">
+                    <button class="post-menu-btn" onclick="toggleMenu(this)"><i class="bi bi-three-dots"></i></button>
+                    <div class="post-dropdown">
+                        <form method="POST" action="{% url 'delete_post' post.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="dropdown-item danger" onclick="return confirm('Delete this post?')">
+                                <i class="bi bi-trash3"></i> Delete Post
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="post-content post-content-full">
+                <p>{{ post.content }}</p>
+                {% if post.image %}
+                <div class="post-image-wrap">
+                    <img src="{{ post.image.url }}" alt="Post image" class="post-image">
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="post-stats">
+                <span>{{ likes_count }} like{{ likes_count|pluralize }}</span>
+                <span>{{ comments|length }} comment{{ comments|length|pluralize }}</span>
+            </div>
+
+            <div class="post-actions">
+                <button class="action-btn like-btn {% if is_liked %}liked{% endif %}"
+                        onclick="toggleLike({{ post.id }}, this)">
+                    <i class="bi bi-heart{% if is_liked %}-fill{% endif %}"></i>
+                    <span class="like-count">{{ likes_count }}</span>
+                </button>
+                <button class="action-btn">
+                    <i class="bi bi-chat"></i>
+                    <span>{{ comments|length }}</span>
+                </button>
+                <button class="action-btn" onclick="sharePost(window.location.href)">
+                    <i class="bi bi-share"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Comment Input -->
+        <div class="card comment-input-card">
+            <div class="comment-input-header">
+                {% if request.user.profile.profile_picture %}
+                    <img src="{{ request.user.profile.profile_picture.url }}" alt="" class="avatar-sm">
+                {% else %}
+                    <div class="avatar-sm avatar-fallback">{{ request.user.username|first|upper }}</div>
+                {% endif %}
+                <form method="POST" action="{% url 'add_comment' post.id %}" class="comment-form">
+                    {% csrf_token %}
+                    <div class="comment-form-inner">
+                        <textarea name="content" placeholder="Share your thoughts..." class="comment-textarea" rows="2" maxlength="500"></textarea>
+                        <button type="submit" class="btn-accent">Comment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Comments -->
+        <div class="comments-section">
+            <h3 class="section-title">Comments ({{ comments|length }})</h3>
+            {% for comment in comments %}
+            <div class="card comment-card" id="comment-{{ comment.id }}">
+                <div class="comment-header">
+                    <a href="{% url 'profile' comment.author.username %}" class="comment-author-link">
+                        {% if comment.author.profile.profile_picture %}
+                            <img src="{{ comment.author.profile.profile_picture.url }}" alt="" class="avatar-sm">
+                        {% else %}
+                            <div class="avatar-sm avatar-fallback">{{ comment.author.username|first|upper }}</div>
+                        {% endif %}
+                        <div>
+                            <span class="comment-author-name">{{ comment.author.get_full_name|default:comment.author.username }}</span>
+                            <span class="comment-time">{{ comment.created_at|timesince }} ago</span>
+                        </div>
+                    </a>
+                    {% if comment.author == request.user %}
+                    <form method="POST" action="{% url 'delete_comment' comment.id %}" class="delete-comment-form">
+                        {% csrf_token %}
+                        <button type="submit" class="delete-comment-btn" onclick="return confirm('Delete this comment?')" title="Delete comment">
+                            <i class="bi bi-trash3"></i>
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+                <p class="comment-content">{{ comment.content }}</p>
+            </div>
+            {% empty %}
+            <div class="empty-comments">
+                <i class="bi bi-chat-dots"></i>
+                <p>No comments yet. Be the first to share your thoughts!</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

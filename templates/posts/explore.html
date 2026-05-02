@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Explore{% endblock %}
+
+{% block content %}
+<div class="feed-layout">
+    <div class="feed-main">
+        <div class="page-header">
+            <h1 class="page-title"><i class="bi bi-compass-fill"></i> Explore</h1>
+            <p class="page-subtitle">Discover posts from the entire community</p>
+        </div>
+
+        {% for item in posts_data %}
+        <div class="card post-card">
+            <div class="post-header">
+                <a href="{% url 'profile' item.post.author.username %}" class="post-author-link">
+                    {% if item.post.author.profile.profile_picture %}
+                        <img src="{{ item.post.author.profile.profile_picture.url }}" alt="" class="avatar-md">
+                    {% else %}
+                        <div class="avatar-md avatar-fallback">{{ item.post.author.username|first|upper }}</div>
+                    {% endif %}
+                    <div class="post-author-info">
+                        <span class="post-author-name">{{ item.post.author.get_full_name|default:item.post.author.username }}</span>
+                        <span class="post-author-handle">@{{ item.post.author.username }} &middot; {{ item.post.created_at|timesince }} ago</span>
+                    </div>
+                </a>
+            </div>
+            <div class="post-content">
+                <p>{{ item.post.content }}</p>
+                {% if item.post.image %}
+                <div class="post-image-wrap">
+                    <img src="{{ item.post.image.url }}" alt="Post image" class="post-image">
+                </div>
+                {% endif %}
+            </div>
+            <div class="post-stats">
+                <span>{{ item.likes_count }} like{{ item.likes_count|pluralize }}</span>
+                <span>{{ item.comments_count }} comment{{ item.comments_count|pluralize }}</span>
+            </div>
+            <div class="post-actions">
+                <button class="action-btn like-btn {% if item.is_liked %}liked{% endif %}"
+                        onclick="toggleLike({{ item.post.id }}, this)">
+                    <i class="bi bi-heart{% if item.is_liked %}-fill{% endif %}"></i>
+                    <span class="like-count">{{ item.likes_count }}</span>
+                </button>
+                <a href="{% url 'post_detail' item.post.id %}" class="action-btn">
+                    <i class="bi bi-chat"></i>
+                    <span>{{ item.comments_count }}</span>
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-feed">
+            <div class="empty-icon">&#128214;</div>
+            <h3>Nothing here yet</h3>
+            <p>Be the first to post something!</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

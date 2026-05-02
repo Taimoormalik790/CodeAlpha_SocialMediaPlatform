@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Home Feed{% endblock %}
+
+{% block content %}
+<div class="feed-layout">
+    <!-- Main Feed -->
+    <div class="feed-main">
+
+        <!-- Create Post Card -->
+        <div class="card create-post-card">
+            <div class="create-post-header">
+                {% if request.user.profile.profile_picture %}
+                    <img src="{{ request.user.profile.profile_picture.url }}" alt="{{ request.user.username }}" class="avatar-md">
+                {% else %}
+                    <div class="avatar-md avatar-fallback">{{ request.user.username|first|upper }}</div>
+                {% endif %}
+                <button class="create-post-trigger" onclick="togglePostForm()">
+                    What's on your mind, {{ request.user.first_name|default:request.user.username }}?
+                </button>
+            </div>
+            <div class="create-post-form" id="postFormCollapse" style="display:none;">
+                <form method="POST" action="{% url 'create_post' %}" enctype="multipart/form-data" id="postForm">
+                    {% csrf_token %}
+                    <textarea name="content" class="post-textarea" placeholder="Share your thoughts..." rows="4" maxlength="2000" id="postContent"></textarea>
+                    <div class="char-count"><span id="charCount">0</span>/2000</div>
+                    <div class="post-form-footer">
+                        <label class="image-upload-label" for="id_image">
+                            <i class="bi bi-image"></i> Add Photo
+                            <input type="file" name="image" id="id_image" accept="image/*" onchange="previewImage(this)">
+                        </label>
+                        <div class="post-actions-right">
+                            <button type="button" class="btn-ghost" onclick="togglePostForm()">Cancel</button>
+                            <button type="submit" class="btn-accent">Post</button>
+                        </div>
+                    </div>
+                    <div id="imagePreview" style="display:none;" class="image-preview-wrap">
+                        <img id="previewImg" src="" alt="Preview">
+                        <button type="button" class="remove-image" onclick="removeImage()"><i class="bi bi-x-circle-fill"></i></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Posts Feed -->
+        {% if posts_data %}
+            {% for item in posts_data %}
+            <div class="card post-card" id="post-{{ item.post.id }}">
+                <div class="post-header">
+                    <a href="{% url 'profile' item.post.author.username %}" class="post-author-link">
+                        {% if item.post.author.profile.profile_picture %}
+                            <img src="{{ item.post.author.profile.profile_picture.url }}" alt="{{ item.post.author.username }}" class="avatar-md">
+                        {% else %}
+                            <div class="avatar-md avatar-fallback">{{ item.post.author.username|first|upper }}</div>
+                        {% endif %}
+                        <div class="post-author-info">
+                            <span class="post-author-name">{{ item.post.author.get_full_name|default:item.post.author.username }}</span>
+                            <span class="post-author-handle">@{{ item.post.author.username }} &middot; {{ item.post.created_at|timesince }} ago</span>
+                        </div>
+                    </a>
+                    {% if item.post.author == request.user %}
+                    <div class="post-menu">
+                        <button class="post-menu-btn" onclick="toggleMenu(this)"><i class="bi bi-three-dots"></i></button>
+                        <div class="post-dropdown">
+                            <form method="POST" action="{% url 'delete_post' item.post.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="dropdown-item danger" onclick="return confirm('Delete this post?')">
+                                    <i class="bi bi-trash3"></i> Delete Post
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="post-content">
+                    <p>{{ item.post.content }}</p>
+                    {% if item.post.image %}
+                    <div class="post-image-wrap">
+                        <img src="{{ item.post.image.url }}" alt="Post image" class="post-image">
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="post-stats">
+                    <span>{{ item.likes_count }} like{{ item.likes_count|pluralize }}</span>
+                    <span>{{ item.comments_count }} comment{{ item.comments_count|pluralize }}</span>
+                </div>
+
+                <div class="post-actions">
+                    <button class="action-btn like-btn {% if item.is_liked %}liked{% endif %}"
+                            data-post-id="{{ item.post.id }}"
+                            onclick="toggleLike({{ item.post.id }}, this)">
+                        <i class="bi bi-heart{% if item.is_liked %}-fill{% endif %}"></i>
+                        <span class="like-count">{{ item.likes_count }}</span>
+                    </button>
+                    <a href="{% url 'post_detail' item.post.id %}" class="action-btn">
+                        <i class="bi bi-chat"></i>
+                        <span>{{ item.comments_count }}</span>
+                    </a>
+                    <button class="action-btn" onclick="sharePost('{% url 'post_detail' item.post.id %}')">
+                        <i class="bi bi-share"></i>
+                    </button>
+                </div>
+
+                <!-- Quick comment -->
+                <div class="quick-comment">
+                    {% if request.user.profile.profile_picture %}
+                        <img src="{{ request.user.profile.profile_picture.url }}" alt="" class="avatar-xs">
+                    {% else %}
+                        <div class="avatar-xs avatar-fallback">{{ request.user.username|first|upper }}</div>
+                    {% endif %}
+                    <form method="POST" action="{% url 'add_comment' item.post.id %}" class="quick-comment-form">
+                        {% csrf_token %}
+                        <input type="text" name="content" placeholder="Add a comment..." class="quick-comment-input" maxlength="500">
+                        <button type="submit" class="quick-comment-submit"><i class="bi bi-send-fill"></i></button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-feed">
+                <div class="empty-icon">&#127758;</div>
+                <h3>Your feed is quiet</h3>
+                <p>Follow some people or explore posts to get started!</p>
+                <a href="{% url 'explore' %}" class="btn-accent">Explore Posts</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Sidebar Right -->
+    <aside class="feed-sidebar">
+        <!-- Who to Follow -->
+        {% if suggested_users %}
+        <div class="card sidebar-card">
+            <h3 class="sidebar-card-title">Who to Follow</h3>
+            <ul class="suggestion-list">
+                {% for sug_user in suggested_users %}
+                <li class="suggestion-item">
+                    <a href="{% url 'profile' sug_user.username %}" class="suggestion-link">
+                        {% if sug_user.profile.profile_picture %}
+                            <img src="{{ sug_user.profile.profile_picture.url }}" alt="{{ sug_user.username }}" class="avatar-sm">
+                        {% else %}
+                            <div class="avatar-sm avatar-fallback">{{ sug_user.username|first|upper }}</div>
+                        {% endif %}
+                        <div class="suggestion-info">
+                            <span class="suggestion-name">{{ sug_user.get_full_name|default:sug_user.username }}</span>
+                            <span class="suggestion-handle">@{{ sug_user.username }}</span>
+                        </div>
+                    </a>
+                    <button class="follow-btn-sm" data-username="{{ sug_user.username }}" onclick="toggleFollowBtn(this)">
+                        Follow
+                    </button>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="card sidebar-card">
+            <p class="footer-note">Made with &#10084; for CodeAlpha Internship &mdash; Task 2: Social Media Platform</p>
+        </div>
+    </aside>
+</div>
+{% endblock %}
