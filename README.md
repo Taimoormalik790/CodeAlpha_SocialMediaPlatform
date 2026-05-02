@@ -203,9 +203,6 @@ Open your browser at **http://127.0.0.1:8000**
 
 ---
 
-## Admin Panel
-
-Access at **http://127.0.0.1:8000/admin/**
 
 Log in with your superuser credentials to manage users, profiles, posts, and comments.
 
